@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Client, ServiceItem, Appointment, Gender } from '../types/salon';
-import { SERVICES_CATALOG, buildWhatsAppLink } from '../lib/constants';
+import { SERVICES, buildWhatsAppLink } from '../lib/constants';
 
 interface NuevaCitaScreenProps {
   clients: Client[];
