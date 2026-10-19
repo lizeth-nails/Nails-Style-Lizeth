@@ -23,7 +23,6 @@ export const SERVICES = [
   { id: 'press-on', name: 'Press On', price: 80000, reminderDays: 25 },
   { id: 'semi-recubrimiento', name: 'Semipermanente + Recubrimiento', price: 65000, reminderDays: 25 },
 ];
-
 export const INITIAL_CLIENTS: Client[] = [
   {
     id: 'c1',
