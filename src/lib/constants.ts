@@ -13,43 +13,15 @@ export const SALON_INFO = {
   crownLogoUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuDTAnT89U66UhP5GR3xH1oV4GZrZygvb_WCwAoMtwjRSKiVZEnoYdj_tVQVATHGFzBJhzNvqcLfhgG4Ha0yV8_pTih3UU_4IAcN8yvD890GOJAu4gm2FRl3vHPs5tTQabEJoOlrFRNaSqTRf3rvMXoIignhStGGCtjC_F2kPX9LNo9lJ0cUJIFVfihjDpCMzPJAKKDkQL4Gy8UuL7jRNzQCqqfzIJpIPD9cRVI-vcayM7O0rzi-5WmOZhh7apBPEAIP"
 };
 
-export const SERVICES_CATALOG: ServiceItem[] = [
-  {
-    id: 'semi',
-    name: 'Mani & Pedi Semipermanente',
-    duration_minutes: 60,
-    duration_text: '60 min de sesión',
-    price_cop: 45000,
-    price_formatted: '$45.000',
-    cycle_days: 25,
-    description: 'Ciclo recomendado de renovación: 25 días',
-    icon: 'brush',
-    color_badge: 'bg-[#c64673] text-[#fffbff]'
-  },
-  {
-    id: 'trad',
-    name: 'Manicure y Pedicura Tradicional',
-    duration_minutes: 45,
-    duration_text: '45 min',
-    price_cop: 28000,
-    price_formatted: '$28.000',
-    cycle_days: 15,
-    description: 'Ciclo recomendado: 15 días',
-    icon: 'clean_hands',
-    color_badge: 'bg-[#fff0f3] text-[#23191d]'
-  },
-  {
-    id: 'care',
-    name: 'Retiro, Fortalecimiento y Spa',
-    duration_minutes: 35,
-    duration_text: '35 min',
-    price_cop: 20000,
-    price_formatted: '$20.000',
-    cycle_days: 20,
-    description: 'Tratamiento hidratante con keratina',
-    icon: 'sanitizer',
-    color_badge: 'bg-[#fff0f3] text-[#23191d]'
-  }
+
+export const SERVICES = [
+  { id: 'mani-pedi', name: 'Manicure y Pedicura', price: 40000, reminderDays: 15 },
+  { id: 'manicure', name: 'Manicure', price: 22000, reminderDays: 15 },
+  { id: 'pedicura', name: 'Pedicura', price: 22000, reminderDays: 15 },
+  { id: 'semi-manos', name: 'Semipermanente Manos', price: 45000, reminderDays: 25 },
+  { id: 'semi-pies', name: 'Semipermanente Pies', price: 40000, reminderDays: 30 },
+  { id: 'press-on', name: 'Press On', price: 80000, reminderDays: 25 },
+  { id: 'semi-recubrimiento', name: 'Semipermanente + Recubrimiento', price: 65000, reminderDays: 25 },
 ];
 
 export const INITIAL_CLIENTS: Client[] = [
