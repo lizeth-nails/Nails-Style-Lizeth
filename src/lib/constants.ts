@@ -14,7 +14,7 @@ export const SALON_INFO = {
 };
 
 
-export const SERVICES = [
+export const SERVICES: ServiceItem[] = [
   { id: 'mani-pedi', name: 'Manicure y Pedicura', price: 40000, reminderDays: 15 },
   { id: 'manicure', name: 'Manicure', price: 22000, reminderDays: 15 },
   { id: 'pedicura', name: 'Pedicura', price: 22000, reminderDays: 15 },
