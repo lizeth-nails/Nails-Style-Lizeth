@@ -171,7 +171,7 @@ export const NuevaCitaScreen: React.FC<NuevaCitaScreenProps> = ({
   });
 
   const currentService: ServiceItem =
-    SERVICES_CATALOG.find((s) => s.id === selectedServiceId) || SERVICES_CATALOG[0];
+    SERVICES.find((s) => s.id === selectedServiceId) || SERVICES[0];
 
   // Calculate estimated end time of the appointment
   const calculateEndTime = (startTime: string, durationMinutes: number): string => {
@@ -538,7 +538,7 @@ export const NuevaCitaScreen: React.FC<NuevaCitaScreenProps> = ({
           </div>
 
           <div className="flex flex-col gap-2">
-            {SERVICES_CATALOG.map((srv) => {
+            {SERVICES.map((srv) => {
               const isSelected = selectedServiceId === srv.id;
               return (
                 <div
