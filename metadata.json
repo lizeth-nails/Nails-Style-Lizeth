@@ -1,0 +1,6 @@
+{
+  "name": "Nails & Style Lizeth Jhoana - Salon PWA Suite",
+  "description": "Suite PWA con diseño glassmorphism de lujo para Nails & Style Lizeth Jhoana. Gestión de agenda semanal, citas, clientes VIP y recordatorios inteligentes automáticos por WhatsApp con backend Supabase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
