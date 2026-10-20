@@ -9,10 +9,9 @@ export const SALON_INFO = {
   quickPinAlt: "1234",
   recoveryEmail: "lizeth@nailsandstyle.com",
   phonePrefix: "+57",
-  logoUrl: "https://lh3.googleusercontent.com/aida/AEtjO1XYIrf3kVFzgD-yDmCptL3TQpE1L1EenHiiNBUrpguzjfTMVRCCTwmqTrlkKqvV9O2RPT0tEwvQ6qcPEttlxGso66gMfpWyTRm4s1IWJNjLRd3cCWtwdmJ-te33kkvtFoHQAPrR-vzXlDskVtPoLmJufh8Kq96xuNMcKsoQoVatarmfqdIrddcyap1j5VNW-0qsO70HSe43TKSSjawzSainE0lWWEFRoQsNXFtnDswq7JGChvsaNMHMO4BXQZH7iRibl_wJGHkm",
-  crownLogoUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuDTAnT89U66UhP5GR3xH1oV4GZrZygvb_WCwAoMtwjRSKiVZEnoYdj_tVQVATHGFzBJhzNvqcLfhgG4Ha0yV8_pTih3UU_4IAcN8yvD890GOJAu4gm2FRl3vHPs5tTQabEJoOlrFRNaSqTRf3rvMXoIignhStGGCtjC_F2kPX9LNo9lJ0cUJIFVfihjDpCMzPJAKKDkQL4Gy8UuL7jRNzQCqqfzIJpIPD9cRVI-vcayM7O0rzi-5WmOZhh7apBPEAIP"
+  logoUrl: "https://lh3.googleusercontent.com/aida/AEtj01XYIrf3kVFzgD-yDmCptL3TQpE1L1EenHiiNBUrpguzjfTMVRCCTwmqTr1kKqvV9O2RPT0EwvQ6qcPEtA",
+  crownLogoUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuDTAnT89U66UhP5GR3xH1oV4GZrZygb_WCwAoMtwjRSKiVZEnoYdj_tVQVATHGFzBJhzQ"
 };
-
 
 export const SERVICES: ServiceItem[] = [
   {
@@ -20,6 +19,8 @@ export const SERVICES: ServiceItem[] = [
     name: 'Manicure y Pedicura',
     price_cop: 40000,
     price_formatted: '$40.000 COP',
+    duration_minutes: 60,
+    duration_text: '60 min',
     reminderDays: 15,
   },
   {
@@ -27,6 +28,8 @@ export const SERVICES: ServiceItem[] = [
     name: 'Manicure',
     price_cop: 22000,
     price_formatted: '$22.000 COP',
+    duration_minutes: 30,
+    duration_text: '30 min',
     reminderDays: 15,
   },
   {
@@ -34,6 +37,8 @@ export const SERVICES: ServiceItem[] = [
     name: 'Pedicura',
     price_cop: 22000,
     price_formatted: '$22.000 COP',
+    duration_minutes: 30,
+    duration_text: '30 min',
     reminderDays: 15,
   },
   {
@@ -41,6 +46,8 @@ export const SERVICES: ServiceItem[] = [
     name: 'Semipermanente Manos',
     price_cop: 45000,
     price_formatted: '$45.000 COP',
+    duration_minutes: 45,
+    duration_text: '45 min',
     reminderDays: 25,
   },
   {
@@ -48,6 +55,8 @@ export const SERVICES: ServiceItem[] = [
     name: 'Semipermanente Pies',
     price_cop: 40000,
     price_formatted: '$40.000 COP',
+    duration_minutes: 45,
+    duration_text: '45 min',
     reminderDays: 30,
   },
   {
@@ -55,6 +64,8 @@ export const SERVICES: ServiceItem[] = [
     name: 'Press On',
     price_cop: 80000,
     price_formatted: '$80.000 COP',
+    duration_minutes: 90,
+    duration_text: '90 min',
     reminderDays: 25,
   },
   {
@@ -62,6 +73,8 @@ export const SERVICES: ServiceItem[] = [
     name: 'Semipermanente + Recubrimiento',
     price_cop: 65000,
     price_formatted: '$65.000 COP',
+    duration_minutes: 75,
+    duration_text: '75 min',
     reminderDays: 25,
   },
 ];
