@@ -16,39 +16,24 @@ export const SALON_INFO = {
 
 export const SERVICES: ServiceItem[] = [
   {
-    id: 'semi-manos-pies',
-    name: 'Mani & Pedi Semipermanente',
-    price_cop: 85000,
-    price_formatted: '$85.000 COP',
-    duration_minutes: 60,
-    duration_text: '60 min de sesión',
-    reminderDays: 25,
-  },
-  {
-    id: 'tradicional',
-    name: 'Manicure y Pedicura Tradicional',
+    id: 'mani-pedi',
+    name: 'Manicure y Pedicura',
     price_cop: 40000,
     price_formatted: '$40.000 COP',
-    duration_minutes: 45,
-    duration_text: '45 min',
     reminderDays: 15,
   },
   {
     id: 'manicure-tradicional',
-    name: 'Manicure Tradicional',
+    name: 'Manicure',
     price_cop: 22000,
     price_formatted: '$22.000 COP',
-    duration_minutes: 30,
-    duration_text: '30 min',
     reminderDays: 15,
   },
   {
     id: 'pedicura-tradicional',
-    name: 'Pedicura Tradicional',
+    name: 'Pedicura',
     price_cop: 22000,
     price_formatted: '$22.000 COP',
-    duration_minutes: 30,
-    duration_text: '30 min',
     reminderDays: 15,
   },
   {
@@ -56,8 +41,6 @@ export const SERVICES: ServiceItem[] = [
     name: 'Semipermanente Manos',
     price_cop: 45000,
     price_formatted: '$45.000 COP',
-    duration_minutes: 45,
-    duration_text: '45 min',
     reminderDays: 25,
   },
   {
@@ -65,8 +48,6 @@ export const SERVICES: ServiceItem[] = [
     name: 'Semipermanente Pies',
     price_cop: 40000,
     price_formatted: '$40.000 COP',
-    duration_minutes: 45,
-    duration_text: '45 min',
     reminderDays: 30,
   },
   {
@@ -74,8 +55,6 @@ export const SERVICES: ServiceItem[] = [
     name: 'Press On',
     price_cop: 80000,
     price_formatted: '$80.000 COP',
-    duration_minutes: 90,
-    duration_text: '90 min',
     reminderDays: 25,
   },
   {
@@ -83,18 +62,7 @@ export const SERVICES: ServiceItem[] = [
     name: 'Semipermanente + Recubrimiento',
     price_cop: 65000,
     price_formatted: '$65.000 COP',
-    duration_minutes: 75,
-    duration_text: '75 min',
     reminderDays: 25,
-  },
-  {
-    id: 'retiro-spa',
-    name: 'Retiro, Fortalecimiento y Spa',
-    price_cop: 20000,
-    price_formatted: '$20.000 COP',
-    duration_minutes: 35,
-    duration_text: '35 min',
-    reminderDays: 30,
   },
 ];
 export const INITIAL_CLIENTS: Client[] = [
