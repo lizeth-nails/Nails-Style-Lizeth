@@ -627,6 +627,7 @@ export function generateAppointmentMessage(
     return `¡Hola ${clientName}! ✂️ Te recordamos tu cita de ${serviceName} ${dateText} a las ${time} en Nails & Style Lizeth Jhoana. ¡Te esperamos para atenderte! 💈✨`;
   }
 }
+export const SERVICES_CATALOG = SERVICES;
 export const SERVICES_DATA = SERVICES;
 
 
