@@ -1,4 +1,4 @@
-import { Client, ServiceItem, Appointment, SpecialDateCampaign, SmartReminder } from '../types/salon';
+import { Client, ServiceItem, Appointment, SpecialDateCampaign, SmartReminder } from '../types';
 
 export const SALON_INFO = {
   name: "Lizeth Jhoana",
