@@ -1,4 +1,4 @@
-import { Client, ServiceItem, Appointment, SpecialDateCampaign, SmartReminder } from '../types';
+import { Client, ServiceItem, Appointment, SpecialDateCampaign, SmartReminder } from '../types/salon';
 
 export const SALON_INFO = {
   name: "Lizeth Jhoana",
@@ -78,6 +78,7 @@ export const SERVICES: ServiceItem[] = [
     reminderDays: 25,
   },
 ];
+
 export const INITIAL_CLIENTS: Client[] = [
   {
     id: 'c1',
@@ -593,6 +594,7 @@ export const SPECIAL_DATE_CAMPAIGNS: SpecialDateCampaign[] = [
     banner_edition: 'Edición Especial Navidad',
   },
 ];
+
 export const TRENDS_SHOWCASE = [
   {
     title: 'Rose Gold Nude',
@@ -604,9 +606,6 @@ export const TRENDS_SHOWCASE = [
   }
 ];
 
-/**
- * Builds custom gender-tailored WhatsApp link and text message
- */
 export function buildWhatsAppLink(phone: string, text: string): string {
   const cleanPhone = phone.replace(/[^0-9]/g, '');
   const encodedText = encodeURIComponent(text);
@@ -626,3 +625,4 @@ export function generateAppointmentMessage(
     return `¡Hola ${clientName}! ✂️ Te recordamos tu cita de ${serviceName} ${dateText} a las ${time} en Nails & Style Lizeth Jhoana. ¡Te esperamos para atenderte! 💈✨`;
   }
 }
+ 
