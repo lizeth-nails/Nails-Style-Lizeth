@@ -1,336 +1,195 @@
 import React, { useState } from 'react';
-import { SmartReminder } from '../types/salon';
-import { SPECIAL_DATE_CAMPAIGNS } from '../lib/constants';
+import { MessageSquare, Calendar, CheckCircle2, Clock, Sparkles, Send, BellRing } from 'lucide-react';
+import { SMART_REMINDERS_DATA, SPECIAL_DATE_CAMPAIGNS, buildWhatsAppLink } from '../lib/constants';
 
-interface AvisosScreenProps {
-  reminders: SmartReminder[];
-  onOpenWhatsAppModal: (clientName: string, phone: string, message: string, service?: string) => void;
-}
-
-export const AvisosScreen: React.FC<AvisosScreenProps> = ({
-  reminders,
-  onOpenWhatsAppModal
-}) => {
-  const [activeTab, setActiveTab] = useState<'ciclos' | 'fechas' | 'promos'>('ciclos');
-  const [promoText, setPromoText] = useState(
-    '✨ ¡Promoción Flash en Nails & Style Lizeth Jhoana! 💅 Reserva hoy tu manicure semipermanente y recibe gratis exfoliación con parafina y diseño básico. ¡Escríbenos para asegurar tu cupo!'
-  );
+export const AvisosScreen: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'ciclos' | 'especiales'>('ciclos');
 
   return (
-    <div className="flex flex-col w-full max-w-[430px] mx-auto px-4 pb-28 pt-2">
-      {/* Dynamic Top Bar & Metric Overview */}
-      <div className="flex items-center justify-between mb-3 pt-1">
-        <div className="flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-[#7e5713] text-[20px] material-symbols-fill">
-            auto_awesome
-          </span>
-          <h2 className="text-[18px] font-bold text-[#23191d]">Avisos Inteligentes</h2>
-        </div>
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#fec97b]/40 text-[#78520e] text-[11px] font-bold shadow-xs backdrop-blur-md border border-[#fec97b]/60">
-          <span className="w-2 h-2 rounded-full bg-[#00873c] animate-pulse" />
-          <span>{reminders.length} Pendientes Hoy</span>
-        </span>
-      </div>
-
-      {/* Quick Filter Navigation (Glassmorphic Pills) */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar">
-        <button
-          onClick={() => setActiveTab('ciclos')}
-          className={`px-4 py-2 rounded-full text-[12px] font-bold shadow-xs transition-all whitespace-nowrap flex items-center gap-1.5 active:scale-95 border ${
-            activeTab === 'ciclos'
-              ? 'bg-[#a62c5a] text-white border-[#a62c5a] shadow-[0_4px_12px_rgba(166,44,90,0.3)]'
-              : 'bg-white/80 text-[#564146] border-white hover:bg-white'
-          }`}
-        >
-          <span className="material-symbols-outlined text-[16px]">sync</span>
-          <span>Ciclos (15/25 Días)</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('fechas')}
-          className={`px-4 py-2 rounded-full text-[12px] font-bold shadow-xs transition-all whitespace-nowrap flex items-center gap-1.5 active:scale-95 border ${
-            activeTab === 'fechas'
-              ? 'bg-[#a62c5a] text-white border-[#a62c5a] shadow-[0_4px_12px_rgba(166,44,90,0.3)]'
-              : 'bg-white/80 text-[#564146] border-white hover:bg-white'
-          }`}
-        >
-          <span className="material-symbols-outlined text-[16px]">celebration</span>
-          <span>Fechas Especiales</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab('promos')}
-          className={`px-4 py-2 rounded-full text-[12px] font-bold shadow-xs transition-all whitespace-nowrap flex items-center gap-1.5 active:scale-95 border ${
-            activeTab === 'promos'
-              ? 'bg-[#a62c5a] text-white border-[#a62c5a] shadow-[0_4px_12px_rgba(166,44,90,0.3)]'
-              : 'bg-white/80 text-[#564146] border-white hover:bg-white'
-          }`}
-        >
-          <span className="material-symbols-outlined text-[16px]">campaign</span>
-          <span>Promociones</span>
-        </button>
-      </div>
-
-      {/* Tab 1: Ciclos de Mantenimiento */}
-      {(activeTab === 'ciclos' || activeTab === 'fechas') && (
-        <div className="flex flex-col gap-4 mt-2">
-          {activeTab === 'ciclos' && (
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#a62c5a] text-[18px]">
-                    schedule
-                  </span>
-                  <span className="text-[14px] font-bold text-[#23191d]">
-                    Ciclos de Mantenimiento
-                  </span>
-                </div>
-                <span className="text-[11px] font-semibold text-[#897176]">
-                  {reminders.length} listas para enviar
-                </span>
-              </div>
-
-              {reminders.map((rem) => {
-                const isMale = rem.client_gender === 'male';
-                return (
-                  <div
-                    key={rem.id}
-                    className="relative bg-white/90 backdrop-blur-xl rounded-3xl p-4 border border-white/90 shadow-[0_6px_22px_rgba(166,44,90,0.07)] flex flex-col gap-3 transition-transform active:scale-[0.99]"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="relative">
-                          <img
-                            src={rem.avatar_url}
-                            alt={rem.client_name}
-                            className="w-12 h-12 rounded-full object-cover shadow-xs border border-white"
-                            onError={(e) => {
-                              e.currentTarget.src = isMale
-                                ? 'https://lh3.googleusercontent.com/aida-public/AB6AXuArfAV0tN-HH_nmvywF89CzGzvEeCbjXRM6NTcmy3uko8QwL2gl_RG1PbrkcOU6pOjiv7_MAkqQTJ_Fz2GgmlATeneH8r37An1oAa4xdrCGzsTaODf0sv6VbW-A1MdbMhugqqSZxWHIKMcUrjHgbxQl7QmCNtiKEKaWTm5nIx_hPFtMG2TXtR_PYaWvM90LDCQf4F6LNIuTyVFWTfC6f2IfSi-qLOMh8BrQ7YQgMjRCmWlHftZ3lBQ'
-                                : 'https://lh3.googleusercontent.com/aida-public/AB6AXuBSeeURk99t7AkWKZbkX9nZ7tZsnFfpAFBPm7l-RCrKVIG6dGC9Ujq28SznzstvVvQ-78zv86aetD26RuaI9PB5c7Os--40I7n1vxnF_9dbyApqJyymsgvlh3ASUPxQIiP_ISs2XeEYgibewmncODtkBlIbkwZROaBR_FXrGpbrAbX-EJtVtmQRV1Qk2K-dxK4VssW7yCbX2dxGIu3LgCJ_iu5CUzcUI05patEz84KwkFKfHce6PGg';
-                            }}
-                          />
-                          <span
-                            className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center font-bold text-[11px] shadow-xs text-white ${
-                              isMale ? 'bg-[#7e5713]' : 'bg-[#a62c5a]'
-                            }`}
-                          >
-                            {isMale ? '♂' : '♀'}
-                          </span>
-                        </div>
-
-                        <div className="flex flex-col">
-                          <div className="flex items-center gap-1.5">
-                            <h3 className="text-[16px] font-bold text-[#23191d]">
-                              {rem.client_name}
-                            </h3>
-                            <span
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                isMale
-                                  ? 'bg-[#fec97b]/50 text-[#78520e]'
-                                  : 'bg-[#ffd9e1] text-[#891345]'
-                              }`}
-                            >
-                              {rem.cycle_days} días
-                            </span>
-                          </div>
-                          <span className="text-[12px] text-[#897176] font-medium flex items-center gap-1">
-                            <span className="material-symbols-outlined text-[15px] text-[#7e5713]">
-                              {isMale ? 'verified' : 'brush'}
-                            </span>
-                            {rem.service_name}
-                          </span>
-                        </div>
-                      </div>
-
-                      <span
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 ${
-                          rem.is_urgent
-                            ? 'bg-[#fec97b] text-[#78520e]'
-                            : 'bg-[#fff0f3] text-[#a62c5a]'
-                        }`}
-                      >
-                        <span className="material-symbols-outlined text-[13px]">
-                          {rem.is_urgent ? 'timer' : 'event_repeat'}
-                        </span>
-                        {rem.is_urgent ? 'Urgente' : 'Hoy'}
-                      </span>
-                    </div>
-
-                    {/* Custom Template Bubble */}
-                    <div className="bg-[#fff0f3]/70 border border-[#ffd9e1] rounded-2xl p-3 text-[#564146] text-[12px] leading-relaxed">
-                      <p className="line-clamp-2 italic">"{rem.whatsapp_message}"</p>
-                    </div>
-
-                    {/* Direct WhatsApp Action Button */}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        onOpenWhatsAppModal(
-                          rem.client_name,
-                          rem.client_phone,
-                          rem.whatsapp_message,
-                          rem.service_name
-                        )
-                      }
-                      className="w-full h-12 rounded-full bg-[#25D366] hover:bg-[#20ba5a] text-white flex items-center justify-center gap-2 text-[14px] font-bold shadow-[0_6px_18px_rgba(37,211,102,0.35)] active:scale-98 transition-all"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">chat</span>
-                      <span>Enviar por WhatsApp</span>
-                    </button>
-                  </div>
-                );
-              })}
+    <div className="space-y-6 pb-24">
+      {/* Encabezado con Tabs */}
+      <div className="bg-white rounded-2xl p-4 shadow-sm border border-pink-100">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="p-2 bg-pink-50 rounded-xl text-pink-600">
+              <Sparkles className="w-5 h-5" />
             </div>
-          )}
-
-          {/* Section 2: Alertas de Fechas Especiales (8 Días Antes) */}
-          <div className="flex flex-col gap-3 pt-1">
-            <div className="flex items-center justify-between px-1">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#7e5713] text-[18px]">
-                  volunteer_activism
-                </span>
-                <span className="text-[14px] font-bold text-[#23191d]">
-                  Fechas Especiales (8 Días Antes)
-                </span>
-              </div>
-              <span className="text-[11px] text-[#7e5713] font-bold">Campaña Activa</span>
-            </div>
-
-            {/* Campaign Card 1: Día de la Madre */}
-            {SPECIAL_DATE_CAMPAIGNS.filter((c) => c.is_active).map((camp) => (
-              <div
-                key={camp.id}
-                className="relative overflow-hidden bg-gradient-to-br from-[#ffd9e1]/60 via-[#fff0f3] to-white rounded-3xl p-4 border border-[#ffd9e1] shadow-[0_8px_25px_rgba(166,44,90,0.08)] flex flex-col gap-3"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-full bg-[#a62c5a]/10 flex items-center justify-center text-[#a62c5a] shadow-inner">
-                      <span className="material-symbols-outlined text-[24px] material-symbols-fill">
-                        card_giftcard
-                      </span>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <h3 className="text-[16px] font-bold text-[#23191d]">{camp.title}</h3>
-                        <span className="px-2 py-0.5 rounded-full bg-[#a62c5a] text-white text-[10px] font-bold">
-                          {camp.tag}
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-[#897176]">{camp.subtitle}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Festive Banner */}
-                <div className="relative w-full h-24 rounded-2xl overflow-hidden shadow-xs">
-                  <img
-                    src={camp.banner_url}
-                    alt={camp.title}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent flex items-center px-4">
-                    <div className="text-white">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#fec97b]">
-                        {camp.banner_edition}
-                      </span>
-                      <p className="text-[16px] font-bold leading-tight">
-                        {camp.banner_headline}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white/90 rounded-2xl p-2.5 text-[#564146] text-[12px] border border-[#ffd9e1]">
-                  <p className="line-clamp-2 italic">"{camp.sample_message}"</p>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    onOpenWhatsAppModal(
-                      'Lista de Clientes VIP',
-                      '+57 300 000 0000',
-                      camp.sample_message,
-                      camp.title
-                    )
-                  }
-                  className="w-full h-12 rounded-full bg-[#a62c5a] hover:bg-[#891345] text-white flex items-center justify-center gap-2 text-[14px] font-bold shadow-[0_6px_20px_rgba(166,44,90,0.3)] active:scale-98 transition-all"
-                >
-                  <span className="material-symbols-outlined text-[18px]">send</span>
-                  <span>Enviar a Clientes (WhatsApp)</span>
-                </button>
-              </div>
-            ))}
-
-            {/* Quick Calendar Cue for upcoming Amor y Amistad */}
-            <div className="bg-white/80 backdrop-blur-md rounded-2xl p-3 border border-white flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-[#7e5713]/15 flex items-center justify-center text-[#7e5713]">
-                  <span className="material-symbols-outlined text-[18px]">calendar_month</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[13px] font-bold text-[#23191d]">
-                    Próxima Fecha: Amor y Amistad
-                  </span>
-                  <span className="text-[11px] text-[#897176]">
-                    Alerta programada para el 12 de Septiembre
-                  </span>
-                </div>
-              </div>
-              <span className="material-symbols-outlined text-[#897176] text-[18px]">
-                lock_clock
-              </span>
+            <div>
+              <h2 className="font-semibold text-gray-900">Avisos Inteligentes</h2>
+              <p className="text-xs text-gray-500">Gestión de recordatorios y campañas automáticas</p>
             </div>
           </div>
         </div>
+
+        {/* Botones de Cambio de Pestaña */}
+        <div className="grid grid-cols-2 gap-2 p-1 bg-gray-50 rounded-xl">
+          <button
+            onClick={() => setActiveTab('ciclos')}
+            className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-medium transition-all ${
+              activeTab === 'ciclos'
+                ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <Clock className="w-4 h-4" />
+            <span>Ciclos Mantenimiento</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('especiales')}
+            className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-medium transition-all ${
+              activeTab === 'especiales'
+                ? 'bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <Calendar className="w-4 h-4" />
+            <span>Fechas Especiales</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Pestaña 1: Ciclos de Mantenimiento */}
+      {activeTab === 'ciclos' && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Pendientes de Mantenimiento ({SMART_REMINDERS_DATA.length})
+            </span>
+          </div>
+
+          {SMART_REMINDERS_DATA.map((reminder) => (
+            <div
+              key={reminder.id}
+              className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:border-pink-200 transition-all space-y-3"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={reminder.avatar_url || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
+                    alt={reminder.client_name}
+                    className="w-10 h-10 rounded-full object-cover ring-2 ring-pink-100"
+                  />
+                  <div>
+                    <h3 className="font-semibold text-gray-900 text-sm">{reminder.client_name}</h3>
+                    <p className="text-xs text-gray-500">{reminder.service_name}</p>
+                  </div>
+                </div>
+
+                <span
+                  className={`px-2.5 py-1 rounded-full text-[10px] font-semibold ${
+                    reminder.is_urgent
+                      ? 'bg-rose-50 text-rose-600 border border-rose-200'
+                      : 'bg-amber-50 text-amber-600 border border-amber-200'
+                  }`}
+                >
+                  {reminder.days_elapsed} días transcurridos
+                </span>
+              </div>
+
+              <div className="bg-pink-50/50 rounded-xl p-3 text-xs text-gray-700 italic border border-pink-100/50">
+                "{reminder.whatsapp_message}"
+              </div>
+
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-[11px] text-gray-400">
+                  Próximo ciclo: <strong className="text-gray-600">{reminder.target_date}</strong>
+                </span>
+
+                <a
+                  href={buildWhatsAppLink(reminder.client_phone, reminder.whatsapp_message)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 text-white text-xs font-medium rounded-xl hover:bg-emerald-600 transition-colors shadow-sm"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Enviar WhatsApp</span>
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
 
-      {/* Tab 3: Promociones */}
-      {activeTab === 'promos' && (
-        <div className="flex flex-col gap-3 mt-2">
-          <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-4 border border-white/90 shadow-sm flex flex-col gap-3">
-            <div className="flex items-center gap-2 text-[#a62c5a]">
-              <span className="material-symbols-outlined text-[22px]">campaign</span>
-              <h3 className="text-[16px] font-bold text-[#23191d]">
-                Difusión de Promociones WhatsApp
-              </h3>
-            </div>
-            <p className="text-[12px] text-[#564146] leading-relaxed">
-              Redacta ofertas especiales, combos de temporada o descuentos exclusivos y envíalos directamente a tus clientes registrados en WhatsApp.
-            </p>
+      {/* Pestaña 2: Lista Completa de Fechas Especiales Colombia */}
+      {activeTab === 'especiales' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Calendario de Fechas Especiales Colombia ({SPECIAL_DATE_CAMPAIGNS.length})
+            </span>
+            <span className="text-[11px] text-pink-600 bg-pink-50 px-2 py-0.5 rounded-full font-medium">
+              Notificaciones 8 Días Antes
+            </span>
+          </div>
 
-            <div className="flex flex-col gap-1">
-              <label className="text-[11px] font-semibold text-[#897176] uppercase">
-                Texto del Mensaje Promocional
-              </label>
-              <textarea
-                rows={4}
-                value={promoText}
-                onChange={(e) => setPromoText(e.target.value)}
-                className="w-full p-3 bg-[#fff0f3] border border-[#ffd9e1] rounded-2xl text-[13px] text-[#23191d] focus:outline-none focus:bg-white resize-none leading-relaxed"
-              />
-            </div>
+          <div className="grid gap-4">
+            {SPECIAL_DATE_CAMPAIGNS.map((campaign) => {
+              const isReadyToNotify = campaign.days_left <= 8;
 
-            <button
-              type="button"
-              onClick={() =>
-                onOpenWhatsAppModal(
-                  'Clientes Seleccionados',
-                  '+57 300 000 0000',
-                  promoText,
-                  'Promoción Especial'
-                )
-              }
-              className="w-full h-12 rounded-full bg-[#006b2e] hover:bg-[#00873c] text-white flex items-center justify-center gap-2 text-[14px] font-bold shadow-[0_6px_18px_rgba(0,107,46,0.25)] active:scale-98 transition-all"
-            >
-              <span className="material-symbols-outlined text-[18px]">send</span>
-              <span>Lanzar Promoción vía WhatsApp</span>
-            </button>
+              return (
+                <div
+                  key={campaign.id}
+                  className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:border-pink-200 transition-all"
+                >
+                  {/* Banner superior de la campaña */}
+                  <div className="relative h-28 w-full overflow-hidden">
+                    <img
+                      src={campaign.banner_url}
+                      alt={campaign.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                    <div className="absolute top-3 left-3">
+                      <span className="px-2.5 py-1 bg-white/90 backdrop-blur-md rounded-full text-[10px] font-bold text-gray-900 shadow-sm">
+                        {campaign.tag}
+                      </span>
+                    </div>
+                    <div className="absolute bottom-3 left-3 right-3 text-white">
+                      <h3 className="font-bold text-base leading-tight">{campaign.title}</h3>
+                      <p className="text-[11px] text-gray-200">{campaign.banner_edition}</p>
+                    </div>
+                  </div>
+
+                  {/* Cuerpo de la tarjeta */}
+                  <div className="p-4 space-y-3">
+                    <p className="text-xs text-gray-600">{campaign.subtitle}</p>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                      <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                        <Calendar className="w-4 h-4 text-pink-500" />
+                        <span>Ventana de aviso: 8 Días Antes</span>
+                      </div>
+
+                      {isReadyToNotify ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-full border border-emerald-200">
+                          <BellRing className="w-3.5 h-3.5" />
+                          ¡Campaña Activa!
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-50 text-gray-600 text-xs font-medium rounded-full border border-gray-200">
+                          Programada
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Botón de envío masivo/campaña de WhatsApp */}
+                    <div className="pt-1">
+                      <button
+                        onClick={() => {
+                          const message = `¡Hola! ✨ En Nails & Style Lizeth Jhoana nos preparamos para ${campaign.title}. ¡Separa tu cita con anticipación y luce impecable! 💅💖`;
+                          window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+                        }}
+                        className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs font-medium rounded-xl hover:from-pink-600 hover:to-rose-600 transition-all shadow-sm"
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                        <span>Difundir Campaña por WhatsApp</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
