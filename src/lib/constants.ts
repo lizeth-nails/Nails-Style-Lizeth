@@ -606,12 +606,12 @@ export function generateAppointmentMessage(
   gender: 'female' | 'male',
   serviceName: string,
   time: string,
-  dateText: string = 'hoy'
+  dateText: string = 'miércoles, 21 de octubre de 2026'
 ): string {
   if (gender === 'female') {
-    return `¡Hola ${clientName}! ✨ Te recordamos tu cita de ${serviceName} ${dateText} a las ${time} en Nails & Style Lizeth Jhoana. ¡Te esperamos para consentirte! 💅💖`;
+    return `¡Hola ${clientName}! ✨ Te recordamos tu cita de ${serviceName} para el ${dateText} a las ${time} en Nails & Style Lizeth Jhoana. ¡Te esperamos para consentirte! 💅💖`;
   } else {
-    return `¡Hola ${clientName}! ✨ Te recordamos tu cita de ${serviceName} ${dateText} a las ${time} en Nails & Style Lizeth Jhoana. ¡Te esperamos para cuidar tus manos y pies! 🧴👌`;
+    return `¡Hola ${clientName}! ✨ Te recordamos tu cita de ${serviceName} para el ${dateText} a las ${time} en Nails & Style Lizeth Jhoana. ¡Te esperamos para cuidar tus manos y pies! 🧴👌`;
   }
 }
 export const SERVICES_CATALOG = SERVICES;
