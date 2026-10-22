@@ -381,14 +381,14 @@ export const SMART_REMINDERS_DATA: SmartReminder[] = [
     client_name: 'José L.',
     client_gender: 'male',
     client_phone: '+57 312 890 1234',
-    service_name: 'Semipermanente Caballero',
-    cycle_days: 25,
-    days_elapsed: 25,
+    service_name: 'Manicure Tradicional',
+    cycle_days: 15,
+    days_elapsed: 15,
     is_urgent: true,
-    appointment_date: '2026-08-28',
+    appointment_date: '2026-09-07',
     target_date: '2026-09-22',
     avatar_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuArfAV0tN-HH_nmvywF89CzGzvEeCbjXRM6NTcmy3uko8QwL2gl_RG1PbrkcOU6pOjiv7_MAkqQTJ_Fz2GgmlATeneH8r37An1oAa4xdrCGzsTaODf0sv6VbW-A1MdbMhugqqSZxWHIKMcUrjHgbxQl7QmCNtiKEKaWTm5nIx_hPFtMG2TXtR_PYaWvM90LDCQf4F6LNIuTyVFWTfC6f2IfSi-qLOMh8BrQ7YQgMjRCmWlHftZ3lBQ',
-    whatsapp_message: "¡Hola José! Te escribimos de Nails & Style Lizeth Jhoana para recordarte el mantenimiento de tus uñas semipermanentes. ¡Agenda tu cita para mantenerlas impecables! ✨✂️"
+    whatsapp_message: "¡Hola José! Te escribimos de Nails & Style Lizeth Jhoana para recordarte el mantenimiento de tus uñas. ¡Agenda tu cita para mantener tus manos impecables! ✨🧴"
   },
   {
     id: 'r3',
@@ -433,7 +433,7 @@ export const SMART_REMINDERS_DATA: SmartReminder[] = [
     appointment_date: '2026-08-28',
     target_date: '2026-09-22',
     avatar_url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDOqaijuPp-sTcVTuF7UOyPZiGgrj6vUeppJlSCn48tBitItCf0qRzKg5iIODRYdnWoiUzXDviY2Co3p-d9_LE_uhR8vxRBIOlzpEom5VcRaWnR__BoZYJzoG0e6E8MBTigaPWqFhDqEd2whwMIjtjeDxOccex674joQqDT8dcSnj6ivKKIeMgHCViSgT28h5MyjTltZ7OkGExqy9EsyNF-7WOfpAVCEd4He1VkTs6fH-ksgZJOVJM',
-    whatsapp_message: "Estimado David, te saludamos de Nails & Style Lizeth Jhoana para recordarte tu sesión mensual de pedicura spa y parafina. ¡Te esperamos! 💈🦶"
+    whatsapp_message: "Estimado David, te saludamos de Nails & Style Lizeth Jhoana para recordarte tu sesión mensual de pedicura spa y cuidado de pies. ¡Te esperamos! ✨🦶"
   },
   {
     id: 'r6',
@@ -448,7 +448,7 @@ export const SMART_REMINDERS_DATA: SmartReminder[] = [
     appointment_date: '2026-09-07',
     target_date: '2026-09-22',
     avatar_url: '',
-    whatsapp_message: "¡Hola Carlos! Ya se cumplieron 15 días de tu manicure. Agenda tu turno para mantener el cuidado de cutículas en Nails & Style. ✂️✨"
+    whatsapp_message: "¡Hola Carlos! Ya se cumplieron 15 días de tu manicure. Agenda tu turno para mantener el cuidado de cutículas en Nails & Style. 🧼✨"
   },
   {
     id: 'r7',
@@ -493,7 +493,7 @@ export const SMART_REMINDERS_DATA: SmartReminder[] = [
     appointment_date: '2026-09-07',
     target_date: '2026-09-22',
     avatar_url: '',
-    whatsapp_message: "¡Hola Andrés! Te saludamos de Nails & Style para recordarte tu turno de manicure tradicional y cuidado de manos. ¡Agenda cuando gustes! ✂️💈"
+    whatsapp_message: "¡Hola Andrés! Te saludamos de Nails & Style para recordarte tu turno de manicure y cuidado de manos. ¡Agenda cuando gustes! 👌✨"
   },
   {
     id: 'r10',
@@ -611,9 +611,7 @@ export function generateAppointmentMessage(
   if (gender === 'female') {
     return `¡Hola ${clientName}! ✨ Te recordamos tu cita de ${serviceName} ${dateText} a las ${time} en Nails & Style Lizeth Jhoana. ¡Te esperamos para consentirte! 💅💖`;
   } else {
-
-    
-    return `¡Hola ${clientName}! ✂️ Te recordamos tu cita de ${serviceName} ${dateText} a las ${time} en Nails & Style Lizeth Jhoana. ¡Te esperamos para atenderte! 💈✨`;
+    return `¡Hola ${clientName}! ✨ Te recordamos tu cita de ${serviceName} ${dateText} a las ${time} en Nails & Style Lizeth Jhoana. ¡Te esperamos para cuidar tus manos y pies! 🧴👌`;
   }
 }
 export const SERVICES_CATALOG = SERVICES;
