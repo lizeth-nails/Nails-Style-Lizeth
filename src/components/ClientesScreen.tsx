@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2, Phone, AlertTriangle, ShieldAlert, X } from 'lucide-react';
-import supabase from '../lib/supabase';
+import { supabase } from '../lib/supabase';
 import { Client } from '../types/salon';
 
 export const ClientesScreen: React.FC = () => {
@@ -8,7 +8,6 @@ export const ClientesScreen: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
   
-  // Estados para Modal de Edición / Creación
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [formData, setFormData] = useState({
@@ -19,10 +18,8 @@ export const ClientesScreen: React.FC = () => {
     has_allergies: false,
   });
 
-  // Estado para Modal de Confirmación de Eliminación
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
 
-  // Función para obtener los clientes directamente desde Supabase
   const fetchClientsFromSupabase = async () => {
     setLoading(true);
     const { data, error } = await supabase
@@ -31,26 +28,23 @@ export const ClientesScreen: React.FC = () => {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Error al cargar clientes desde Supabase:', error.message);
+      console.error('Error al cargar clientes:', error.message);
     } else {
       setClients(data || []);
     }
     setLoading(false);
   };
 
-  // Cargar clientes al montar el componente
   useEffect(() => {
     fetchClientsFromSupabase();
   }, []);
 
-  // Filtrado de clientes por búsqueda
   const filteredClients = clients.filter(
     (client) =>
       client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.phone?.includes(searchTerm)
   );
 
-  // Abrir modal para crear cliente nuevo
   const handleOpenCreateModal = () => {
     setEditingClient(null);
     setFormData({
@@ -63,7 +57,6 @@ export const ClientesScreen: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  // Abrir modal para editar cliente existente
   const handleOpenEditModal = (client: Client) => {
     setEditingClient(client);
     setFormData({
@@ -76,14 +69,12 @@ export const ClientesScreen: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  // Guardar Cambios (Crear o Editar en Supabase de forma real)
   const handleSaveClient = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) return;
 
     try {
       if (editingClient) {
-        // EDICIÓN DE CLIENTE EXISTENTE
         const { error } = await supabase
           .from('clientes')
           .update({
@@ -93,11 +84,10 @@ export const ClientesScreen: React.FC = () => {
             notes: formData.notes,
             has_allergies: formData.has_allergies,
           })
-          .eq('id', editingClient.id); // Clave para que sepa exactamente qué registro actualizar
+          .eq('id', editingClient.id);
 
         if (error) throw error;
       } else {
-        // CREACIÓN DE NUEVO CLIENTE
         const { error } = await supabase
           .from('clientes')
           .insert([
@@ -115,16 +105,14 @@ export const ClientesScreen: React.FC = () => {
         if (error) throw error;
       }
 
-      // Cerrar modal y refrescar la lista completa desde la base de datos
       setIsModalOpen(false);
       fetchClientsFromSupabase();
     } catch (err: any) {
       console.error('Error al guardar el cliente:', err.message);
-      alert('Hubo un error al guardar o editar el cliente en la base de datos.');
+      alert('Hubo un error al guardar o editar el cliente.');
     }
   };
 
-  // Eliminar Cliente de Supabase
   const handleConfirmDelete = async () => {
     if (clientToDelete) {
       try {
@@ -146,7 +134,6 @@ export const ClientesScreen: React.FC = () => {
 
   return (
     <div className="space-y-6 pb-24">
-      {/* Encabezado y Barra de Búsqueda */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-pink-100 space-y-4">
         <div className="flex items-center justify-between">
           <div>
@@ -162,7 +149,6 @@ export const ClientesScreen: React.FC = () => {
           </button>
         </div>
 
-        {/* Búsqueda */}
         <div className="relative">
           <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
@@ -175,7 +161,6 @@ export const ClientesScreen: React.FC = () => {
         </div>
       </div>
 
-      {/* Lista de Clientes */}
       <div className="space-y-3">
         <div className="flex items-center justify-between px-1">
           <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -220,7 +205,6 @@ export const ClientesScreen: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Botones de Acción: Editar y Eliminar */}
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => handleOpenEditModal(client)}
@@ -239,7 +223,6 @@ export const ClientesScreen: React.FC = () => {
                 </div>
               </div>
 
-              {/* Notas y Preferencias */}
               {client.notes && (
                 <div className="bg-gray-50 rounded-xl p-2.5 text-xs text-gray-600 border border-gray-100">
                   <strong className="text-gray-700">Preferencias: </strong>
@@ -247,7 +230,6 @@ export const ClientesScreen: React.FC = () => {
                 </div>
               )}
 
-              {/* Último servicio */}
               <div className="flex items-center justify-between text-[11px] text-gray-400 pt-1 border-t border-gray-50">
                 <span>Último servicio: <strong className="text-gray-600">{client.last_service_name}</strong></span>
                 <span>{client.last_service_date}</span>
@@ -257,7 +239,6 @@ export const ClientesScreen: React.FC = () => {
         )}
       </div>
 
-      {/* MODAL: Crear / Editar Cliente */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-xl border border-pink-100 space-y-4">
@@ -358,7 +339,6 @@ export const ClientesScreen: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL: Confirmación de Eliminación */}
       {clientToDelete && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-xl border border-rose-100 text-center space-y-4">
@@ -393,3 +373,4 @@ export const ClientesScreen: React.FC = () => {
     </div>
   );
 };
+  
