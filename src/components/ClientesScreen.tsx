@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
-import { Search, Plus, Edit2, Trash2, Phone, AlertTriangle, User, ShieldAlert, Check, X } from 'lucide-react';
-import { INITIAL_CLIENTS } from '../lib/constants';
+import React, { useState, useEffect } from 'react';
+import { Search, Plus, Edit2, Trash2, Phone, AlertTriangle, ShieldAlert, X } from 'lucide-react';
+import { supabase } from '../lib/supabase'; // Asegúrate de que esta ruta apunte a tu cliente de Supabase
 import { Client } from '../types/salon';
 
 export const ClientesScreen: React.FC = () => {
-  const [clients, setClients] = useState<Client[]>(INITIAL_CLIENTS);
+  const [clients, setClients] = useState<Client[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
   
   // Estados para Modal de Edición / Creación
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -21,11 +22,32 @@ export const ClientesScreen: React.FC = () => {
   // Estado para Modal de Confirmación de Eliminación
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
 
+  // Función para obtener los clientes directamente desde Supabase
+  const fetchClientsFromSupabase = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('clientes')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error al cargar clientes desde Supabase:', error.message);
+    } else {
+      setClients(data || []);
+    }
+    setLoading(false);
+  };
+
+  // Cargar clientes al montar el componente
+  useEffect(() => {
+    fetchClientsFromSupabase();
+  }, []);
+
   // Filtrado de clientes por búsqueda
   const filteredClients = clients.filter(
     (client) =>
-      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.phone.includes(searchTerm)
+      client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.phone?.includes(searchTerm)
   );
 
   // Abrir modal para crear cliente nuevo
@@ -54,50 +76,71 @@ export const ClientesScreen: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  // Guardar Cambios (Crear o Editar)
-  const handleSaveClient = (e: React.FormEvent) => {
+  // Guardar Cambios (Crear o Editar en Supabase de forma real)
+  const handleSaveClient = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) return;
 
-    if (editingClient) {
-      // Editar
-      setClients((prev) =>
-        prev.map((c) =>
-          c.id === editingClient.id
-            ? {
-                ...c,
-                name: formData.name,
-                phone: formData.phone,
-                gender: formData.gender,
-                notes: formData.notes,
-                has_allergies: formData.has_allergies,
-              }
-            : c
-        )
-      );
-    } else {
-      // Crear
-      const newClient: Client = {
-        id: `c_${Date.now()}`,
-        name: formData.name,
-        phone: formData.phone,
-        gender: formData.gender,
-        notes: formData.notes,
-        has_allergies: formData.has_allergies,
-        last_service_date: 'Sin servicios registrados',
-        last_service_name: 'Cliente nuevo',
-      };
-      setClients((prev) => [newClient, ...prev]);
-    }
+    try {
+      if (editingClient) {
+        // EDICIÓN DE CLIENTE EXISTENTE
+        const { error } = await supabase
+          .from('clientes')
+          .update({
+            name: formData.name,
+            phone: formData.phone,
+            gender: formData.gender,
+            notes: formData.notes,
+            has_allergies: formData.has_allergies,
+          })
+          .eq('id', editingClient.id); // Clave para que sepa exactamente qué registro actualizar
 
-    setIsModalOpen(false);
+        if (error) throw error;
+      } else {
+        // CREACIÓN DE NUEVO CLIENTE
+        const { error } = await supabase
+          .from('clientes')
+          .insert([
+            {
+              name: formData.name,
+              phone: formData.phone,
+              gender: formData.gender,
+              notes: formData.notes,
+              has_allergies: formData.has_allergies,
+              last_service_date: 'Sin servicios',
+              last_service_name: 'Cliente nuevo',
+            },
+          ]);
+
+        if (error) throw error;
+      }
+
+      // Cerrar modal y refrescar la lista completa desde la base de datos
+      setIsModalOpen(false);
+      fetchClientsFromSupabase();
+    } catch (err: any) {
+      console.error('Error al guardar el cliente:', err.message);
+      alert('Hubo un error al guardar o editar el cliente en la base de datos.');
+    }
   };
 
-  // Eliminar Cliente
-  const handleConfirmDelete = () => {
+  // Eliminar Cliente de Supabase
+  const handleConfirmDelete = async () => {
     if (clientToDelete) {
-      setClients((prev) => prev.filter((c) => c.id !== clientToDelete.id));
-      setClientToDelete(null);
+      try {
+        const { error } = await supabase
+          .from('clientes')
+          .delete()
+          .eq('id', clientToDelete.id);
+
+        if (error) throw error;
+
+        setClientToDelete(null);
+        fetchClientsFromSupabase();
+      } catch (err: any) {
+        console.error('Error al eliminar el cliente:', err.message);
+        alert('Hubo un error al eliminar el cliente.');
+      }
     }
   };
 
@@ -140,72 +183,78 @@ export const ClientesScreen: React.FC = () => {
           </span>
         </div>
 
-        {filteredClients.map((client) => (
-          <div
-            key={client.id}
-            className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:border-pink-200 transition-all space-y-3"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <img
-                  src={
-                    client.avatar_url ||
-                    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
-                  }
-                  alt={client.name}
-                  className="w-11 h-11 rounded-full object-cover ring-2 ring-pink-100"
-                />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-gray-900 text-sm">{client.name}</h3>
-                    {client.has_allergies && (
-                      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold rounded-full border border-amber-200">
-                        <AlertTriangle className="w-3 h-3 text-amber-500" />
-                        Alergia
-                      </span>
-                    )}
+        {loading ? (
+          <p className="text-center text-xs text-gray-400 py-6">Cargando clientes desde Supabase...</p>
+        ) : filteredClients.length === 0 ? (
+          <p className="text-center text-xs text-gray-400 py-6">No se encontraron clientes registrados.</p>
+        ) : (
+          filteredClients.map((client) => (
+            <div
+              key={client.id}
+              className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 hover:border-pink-200 transition-all space-y-3"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <img
+                    src={
+                      client.avatar_url ||
+                      'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
+                    }
+                    alt={client.name}
+                    className="w-11 h-11 rounded-full object-cover ring-2 ring-pink-100"
+                  />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-gray-900 text-sm">{client.name}</h3>
+                      {client.has_allergies && (
+                        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 bg-amber-50 text-amber-700 text-[10px] font-bold rounded-full border border-amber-200">
+                          <AlertTriangle className="w-3 h-3 text-amber-500" />
+                          Alergia
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                      <Phone className="w-3 h-3 text-gray-400" />
+                      {client.phone}
+                    </p>
                   </div>
-                  <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                    <Phone className="w-3 h-3 text-gray-400" />
-                    {client.phone}
-                  </p>
+                </div>
+
+                {/* Botones de Acción: Editar y Eliminar */}
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleOpenEditModal(client)}
+                    title="Editar cliente"
+                    className="p-2 text-gray-500 hover:text-pink-600 hover:bg-pink-50 rounded-xl transition-all"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setClientToDelete(client)}
+                    title="Eliminar cliente"
+                    className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
 
-              {/* Botones de Acción: Editar y Eliminar */}
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => handleOpenEditModal(client)}
-                  title="Editar cliente"
-                  className="p-2 text-gray-500 hover:text-pink-600 hover:bg-pink-50 rounded-xl transition-all"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setClientToDelete(client)}
-                  title="Eliminar cliente"
-                  className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+              {/* Notas y Preferencias */}
+              {client.notes && (
+                <div className="bg-gray-50 rounded-xl p-2.5 text-xs text-gray-600 border border-gray-100">
+                  <strong className="text-gray-700">Preferencias: </strong>
+                  {client.notes}
+                </div>
+              )}
+
+              {/* Último servicio */}
+              <div className="flex items-center justify-between text-[11px] text-gray-400 pt-1 border-t border-gray-50">
+                <span>Último servicio: <strong className="text-gray-600">{client.last_service_name}</strong></span>
+                <span>{client.last_service_date}</span>
               </div>
             </div>
-
-            {/* Notas y Preferencias */}
-            {client.notes && (
-              <div className="bg-gray-50 rounded-xl p-2.5 text-xs text-gray-600 border border-gray-100">
-                <strong className="text-gray-700">Preferencias: </strong>
-                {client.notes}
-              </div>
-            )}
-
-            {/* Último servicio */}
-            <div className="flex items-center justify-between text-[11px] text-gray-400 pt-1 border-t border-gray-50">
-              <span>Último servicio: <strong className="text-gray-600">{client.last_service_name}</strong></span>
-              <span>{client.last_service_date}</span>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* MODAL: Crear / Editar Cliente */}
