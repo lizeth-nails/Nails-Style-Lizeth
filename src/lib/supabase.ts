@@ -562,3 +562,5 @@ ON CONFLICT (id) DO UPDATE SET
   image = EXCLUDED.image;
 `;
 }
+
+export const supabase = initSupabase();
