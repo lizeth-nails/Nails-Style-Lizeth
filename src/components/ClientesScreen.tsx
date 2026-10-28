@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Plus, Edit2, Trash2, Phone, AlertTriangle, ShieldAlert, X } from 'lucide-react';
-import { supabase } from '../lib/supabase'; // Asegúrate de que esta ruta apunte a tu cliente de Supabase
+import supabase from '../lib/supabase';
 import { Client } from '../types/salon';
 
 export const ClientesScreen: React.FC = () => {
