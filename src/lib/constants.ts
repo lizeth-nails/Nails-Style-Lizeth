@@ -606,12 +606,34 @@ export function generateAppointmentMessage(
   gender: 'female' | 'male',
   serviceName: string,
   time: string,
-  dateText: string = 'miércoles, 21 de octubre de 2026'
+  dateText?: string
 ): string {
+  let formattedDate = dateText || 'hoy';
+
+  try {
+    if (dateText && /^\d{4}-\d{2}-\d{2}$/.test(dateText.trim())) {
+      const [y, m, d] = dateText.trim().split('-');
+      const dateObj = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
+      
+      const options: Intl.DateTimeFormatOptions = {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      };
+      
+      formattedDate = dateObj.toLocaleDateString('es-ES', options);
+    }
+  } catch (e) {
+    console.error('Error al formatear fecha:', e);
+  }
+
+  const firstName = clientName.split(' ')[0];
+
   if (gender === 'female') {
-    return `¡Hola ${clientName}! ✨ Te recordamos tu cita de ${serviceName} para el ${dateText} a las ${time} en Nails & Style Lizeth Jhoana. ¡Te esperamos para consentirte! 💅💖`;
+    return `¡Hola ${firstName}! ✨ Te recordamos tu cita de ${serviceName} para el ${formattedDate} a las ${time} en Nails & Style Lizeth Jhoana. ¡Te esperamos para consentirte! 💅💖`;
   } else {
-    return `¡Hola ${clientName}! ✨ Te recordamos tu cita de ${serviceName} para el ${dateText} a las ${time} en Nails & Style Lizeth Jhoana. ¡Te esperamos para cuidar tus manos y pies! 🧴👌`;
+    return `¡Hola ${firstName}! ✨ Te recordamos tu cita de ${serviceName} para el ${formattedDate} a las ${time} en Nails & Style Lizeth Jhoana. ¡Te esperamos para cuidar tus manos y pies! 🧴👌`;
   }
 }
 export const SERVICES_CATALOG = SERVICES;
