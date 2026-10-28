@@ -584,6 +584,7 @@ export const SPECIAL_DATE_CAMPAIGNS: SpecialDateCampaign[] = [
     banner_edition: 'Edición Especial Navidad (25 de Diciembre)',
   },
 ];
+
 export const TRENDS_SHOWCASE = [
   {
     title: 'Rose Gold Nude',
@@ -613,10 +614,8 @@ export function generateAppointmentMessage(
   if (dateText) {
     const cleanDate = dateText.trim();
 
-    // Si la fecha viene en formato YYYY-MM-DD
     if (/^\d{4}-\d{2}-\d{2}$/.test(cleanDate)) {
       const [y, m, d] = cleanDate.split('-');
-      // Creamos la fecha local asegurando hora mediodía para evitar desfases de zona horaria
       const dateObj = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10), 12, 0, 0);
       
       const options: Intl.DateTimeFormatOptions = {
@@ -626,10 +625,8 @@ export function generateAppointmentMessage(
         year: 'numeric'
       };
       
-      // toLocaleDateString con es-ES genera exactamente "miércoles, 28 de octubre de 2026"
       formattedDate = dateObj.toLocaleDateString('es-ES', options);
     } else {
-      // Si ya viene con texto previo, intentamos parsearlo o normalizarlo
       formattedDate = cleanDate.replace(/^(el\s+|hoy\s*-\s*)/i, '');
     }
   }
@@ -641,38 +638,7 @@ export function generateAppointmentMessage(
   } else {
     return `¡Hola ${firstName}! ✨ Te recordamos tu cita de ${serviceName} para el ${formattedDate} a las ${time} en Nails & Style Lizeth Jhoana. ¡Te esperamos para cuidar tus manos y pies! 🧴👌`;
   }
-}      };
-
-      let converted = cleanText;
-      Object.keys(monthMap).forEach((abbr) => {
-        const regex = new RegExp(`\\b${abbr}\\b`, 'i');
-        if (regex.test(cleanText)) {
-          converted = cleanText.replace(regex, monthMap[abbr]);
-        }
-      });
-
-      // Si no tiene año explícito, le añade el año actual
-      if (!converted.includes('202')) {
-        formattedDate = `${converted} de ${currentYear}`;
-      } else {
-        formattedDate = converted;
-      }
-    }
-  }
-
-  // Extraer el primer nombre
-  const firstName = clientName.split(' ')[0];
-
-  if (gender === 'female') {
-    return `¡Hola ${firstName}! ✨ Te recordamos tu cita de ${serviceName} para el ${formattedDate} a las ${time} en Nails & Style Lizeth Jhoana. ¡Te esperamos para consentirte! 💅💖`;
-  } else {
-    return `¡Hola ${firstName}! ✨ Te recordamos tu cita de ${serviceName} para el ${formattedDate} a las ${time} en Nails & Style Lizeth Jhoana. ¡Te esperamos para cuidar tus manos y pies! 🧴👌`;
-  }
 }
+
 export const SERVICES_CATALOG = SERVICES;
 export const SERVICES_DATA = SERVICES;
-
-
-
-
-
