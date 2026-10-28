@@ -608,26 +608,54 @@ export function generateAppointmentMessage(
   time: string,
   dateText?: string
 ): string {
-  let formattedDate = dateText || 'hoy';
+  let formattedDate = 'hoy';
 
-  try {
-    if (dateText && /^\d{4}-\d{2}-\d{2}$/.test(dateText.trim())) {
-      const [y, m, d] = dateText.trim().split('-');
+  if (dateText) {
+    const cleanDate = dateText.trim();
+
+    // Caso 1: Fecha en formato ISO (YYYY-MM-DD)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(cleanDate)) {
+      const [y, m, d] = cleanDate.split('-');
       const dateObj = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
-      
       const options: Intl.DateTimeFormatOptions = {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
         year: 'numeric'
       };
-      
       formattedDate = dateObj.toLocaleDateString('es-ES', options);
+    } 
+    // Caso 2: Texto corto (ej: "29 de Oct" o "el 29 de Oct")
+    else {
+      const currentYear = new Date().getFullYear();
+      // Quita prefijos como "el " o "Hoy - " si ya venían agregados
+      const cleanText = cleanDate.replace(/^(el\s+|hoy\s*-\s*)/i, '');
+      
+      // Mapeo de meses abreviados a nombre completo
+      const monthMap: Record<string, string> = {
+        Ene: 'enero', Feb: 'febrero', Mar: 'marzo', Abr: 'abril',
+        May: 'mayo', Jun: 'junio', Jul: 'julio', Ago: 'agosto',
+        Sep: 'septiembre', Oct: 'octubre', Nov: 'noviembre', Dic: 'diciembre'
+      };
+
+      let converted = cleanText;
+      Object.keys(monthMap).forEach((abbr) => {
+        const regex = new RegExp(`\\b${abbr}\\b`, 'i');
+        if (regex.test(cleanText)) {
+          converted = cleanText.replace(regex, monthMap[abbr]);
+        }
+      });
+
+      // Si no tiene año explícito, le añade el año actual
+      if (!converted.includes('202')) {
+        formattedDate = `${converted} de ${currentYear}`;
+      } else {
+        formattedDate = converted;
+      }
     }
-  } catch (e) {
-    console.error('Error al formatear fecha:', e);
   }
 
+  // Extraer el primer nombre
   const firstName = clientName.split(' ')[0];
 
   if (gender === 'female') {
