@@ -22,8 +22,13 @@ export const ClientesScreen: React.FC = () => {
 
   const fetchClientsFromSupabase = async () => {
     setLoading(true);
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
     const { data, error } = await supabase
-      .from('clientes')
+      .from('clients')
       .select('*')
       .order('created_at', { ascending: false });
 
@@ -73,10 +78,15 @@ export const ClientesScreen: React.FC = () => {
     e.preventDefault();
     if (!formData.name.trim()) return;
 
+    if (!supabase) {
+      alert('El cliente de Supabase no está disponible.');
+      return;
+    }
+
     try {
       if (editingClient) {
         const { error } = await supabase
-          .from('clientes')
+          .from('clients')
           .update({
             name: formData.name,
             phone: formData.phone,
@@ -88,16 +98,18 @@ export const ClientesScreen: React.FC = () => {
 
         if (error) throw error;
       } else {
+        const newId = `c_${Date.now()}`;
         const { error } = await supabase
-          .from('clientes')
+          .from('clients')
           .insert([
             {
+              id: newId,
               name: formData.name,
               phone: formData.phone,
               gender: formData.gender,
               notes: formData.notes,
               has_allergies: formData.has_allergies,
-              last_service_date: 'Sin servicios',
+              last_service_date: new Date().toLocaleDateString('es-CO'),
               last_service_name: 'Cliente nuevo',
             },
           ]);
@@ -108,16 +120,16 @@ export const ClientesScreen: React.FC = () => {
       setIsModalOpen(false);
       fetchClientsFromSupabase();
     } catch (err: any) {
-      console.error('Error al guardar el cliente:', err.message);
-      alert('Hubo un error al guardar o editar el cliente.');
+      console.error('Error al guardar el cliente:', err);
+      alert(`Error al guardar en Supabase: ${err.message || 'Verifica la conexión'}`);
     }
   };
 
   const handleConfirmDelete = async () => {
-    if (clientToDelete) {
+    if (clientToDelete && supabase) {
       try {
         const { error } = await supabase
-          .from('clientes')
+          .from('clients')
           .delete()
           .eq('id', clientToDelete.id);
 
@@ -126,7 +138,7 @@ export const ClientesScreen: React.FC = () => {
         setClientToDelete(null);
         fetchClientsFromSupabase();
       } catch (err: any) {
-        console.error('Error al eliminar el cliente:', err.message);
+        console.error('Error al eliminar el cliente:', err);
         alert('Hubo un error al eliminar el cliente.');
       }
     }
@@ -231,8 +243,8 @@ export const ClientesScreen: React.FC = () => {
               )}
 
               <div className="flex items-center justify-between text-[11px] text-gray-400 pt-1 border-t border-gray-50">
-                <span>Último servicio: <strong className="text-gray-600">{client.last_service_name}</strong></span>
-                <span>{client.last_service_date}</span>
+                <span>Último servicio: <strong className="text-gray-600">{client.last_service_name || 'Sin servicios'}</strong></span>
+                <span>{client.last_service_date || ''}</span>
               </div>
             </div>
           ))
@@ -373,4 +385,3 @@ export const ClientesScreen: React.FC = () => {
     </div>
   );
 };
-  
