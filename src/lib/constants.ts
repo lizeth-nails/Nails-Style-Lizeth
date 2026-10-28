@@ -613,30 +613,35 @@ export function generateAppointmentMessage(
   if (dateText) {
     const cleanDate = dateText.trim();
 
-    // Caso 1: Fecha en formato ISO (YYYY-MM-DD)
+    // Si la fecha viene en formato YYYY-MM-DD
     if (/^\d{4}-\d{2}-\d{2}$/.test(cleanDate)) {
       const [y, m, d] = cleanDate.split('-');
-      const dateObj = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
+      // Creamos la fecha local asegurando hora mediodía para evitar desfases de zona horaria
+      const dateObj = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10), 12, 0, 0);
+      
       const options: Intl.DateTimeFormatOptions = {
         weekday: 'long',
         day: 'numeric',
         month: 'long',
         year: 'numeric'
       };
-      formattedDate = dateObj.toLocaleDateString('es-ES', options);
-    } 
-    // Caso 2: Texto corto (ej: "29 de Oct" o "el 29 de Oct")
-    else {
-      const currentYear = new Date().getFullYear();
-      // Quita prefijos como "el " o "Hoy - " si ya venían agregados
-      const cleanText = cleanDate.replace(/^(el\s+|hoy\s*-\s*)/i, '');
       
-      // Mapeo de meses abreviados a nombre completo
-      const monthMap: Record<string, string> = {
-        Ene: 'enero', Feb: 'febrero', Mar: 'marzo', Abr: 'abril',
-        May: 'mayo', Jun: 'junio', Jul: 'julio', Ago: 'agosto',
-        Sep: 'septiembre', Oct: 'octubre', Nov: 'noviembre', Dic: 'diciembre'
-      };
+      // toLocaleDateString con es-ES genera exactamente "miércoles, 28 de octubre de 2026"
+      formattedDate = dateObj.toLocaleDateString('es-ES', options);
+    } else {
+      // Si ya viene con texto previo, intentamos parsearlo o normalizarlo
+      formattedDate = cleanDate.replace(/^(el\s+|hoy\s*-\s*)/i, '');
+    }
+  }
+
+  const firstName = clientName.split(' ')[0];
+
+  if (gender === 'female') {
+    return `¡Hola ${firstName}! ✨ Te recordamos tu cita de ${serviceName} para el ${formattedDate} a las ${time} en Nails & Style Lizeth Jhoana. ¡Te esperamos para consentirte! 💅💖`;
+  } else {
+    return `¡Hola ${firstName}! ✨ Te recordamos tu cita de ${serviceName} para el ${formattedDate} a las ${time} en Nails & Style Lizeth Jhoana. ¡Te esperamos para cuidar tus manos y pies! 🧴👌`;
+  }
+}      };
 
       let converted = cleanText;
       Object.keys(monthMap).forEach((abbr) => {
