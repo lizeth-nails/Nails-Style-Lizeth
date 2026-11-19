@@ -1,23 +1,35 @@
 
-   import React, { useState } from 'react';
-import { MessageSquare, Calendar, CheckCircle2, Clock, Sparkles, Send, BellRing } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { MessageSquare, Calendar, CheckCircle2, Clock, Sparkles, Send, BellRing, RotateCcw } from 'lucide-react';
 import { SmartReminder } from '../types/salon';
 import { SPECIAL_DATE_CAMPAIGNS, buildWhatsAppLink } from '../lib/constants';
 
 interface AvisosScreenProps {
   reminders: SmartReminder[];
+  sentReminderKeys?: Record<string, boolean>;
+  onMarkReminderSent?: (reminderId: string) => void;
+  onResetSentReminders?: () => void;
   onOpenWhatsAppModal?: (clientName: string, phone: string, message: string, service?: string) => void;
 }
 
 export const AvisosScreen: React.FC<AvisosScreenProps> = ({
   reminders,
+  sentReminderKeys = {},
+  onMarkReminderSent,
+  onResetSentReminders,
   onOpenWhatsAppModal
 }) => {
   const [activeTab, setActiveTab] = useState<'ciclos' | 'especiales'>('ciclos');
-  const [sentIds, setSentIds] = useState<Record<string, boolean>>({});
+
+  const pendingCount = useMemo(
+    () => reminders.filter((r) => !sentReminderKeys[r.id]).length,
+    [reminders, sentReminderKeys]
+  );
+
+  const sentCount = reminders.length - pendingCount;
 
   const handleSendReminder = (reminder: SmartReminder) => {
-    setSentIds((prev) => ({ ...prev, [reminder.id]: true }));
+    onMarkReminderSent?.(reminder.id);
     if (onOpenWhatsAppModal) {
       onOpenWhatsAppModal(
         reminder.client_name,
@@ -32,7 +44,6 @@ export const AvisosScreen: React.FC<AvisosScreenProps> = ({
 
   return (
     <div className="max-w-[430px] mx-auto px-4 space-y-5 pb-28 pt-2">
-      {/* Encabezado con Tabs */}
       <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-4 shadow-[0_4px_20px_rgba(224,90,135,0.06)] border border-pink-100">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2.5">
@@ -41,15 +52,16 @@ export const AvisosScreen: React.FC<AvisosScreenProps> = ({
             </div>
             <div>
               <h2 className="font-bold text-[#23191d] text-[16px]">Avisos Inteligentes</h2>
-              <p className="text-xs text-[#897176]">Recordatorios automáticos según cada servicio</p>
+              <p className="text-xs text-[#897176]">
+                {pendingCount} por despachar · {sentCount} enviados
+              </p>
             </div>
           </div>
           <span className="px-2.5 py-1 rounded-full bg-[#ffd9e1] text-[#a62c5a] text-xs font-bold">
-            {reminders.length}
+            {pendingCount}
           </span>
         </div>
 
-        {/* Botones de Cambio de Pestaña */}
         <div className="grid grid-cols-2 gap-2 p-1 bg-[#fff8f8] rounded-2xl border border-pink-100/60">
           <button
             onClick={() => setActiveTab('ciclos')}
@@ -60,7 +72,7 @@ export const AvisosScreen: React.FC<AvisosScreenProps> = ({
             }`}
           >
             <Clock className="w-3.5 h-3.5" />
-            <span>Mantenimiento ({reminders.length})</span>
+            <span>Mantenimiento ({pendingCount})</span>
           </button>
 
           <button
@@ -77,13 +89,22 @@ export const AvisosScreen: React.FC<AvisosScreenProps> = ({
         </div>
       </div>
 
-      {/* Pestaña 1: Ciclos de Mantenimiento Reales */}
       {activeTab === 'ciclos' && (
         <div className="space-y-3">
           <div className="flex items-center justify-between px-1">
             <span className="text-[11px] font-bold text-[#897176] uppercase tracking-wider">
-              Clientas listas para recordar ({reminders.length})
+              Pendientes por despachar ({pendingCount})
             </span>
+            {sentCount > 0 && onResetSentReminders && (
+              <button
+                type="button"
+                onClick={onResetSentReminders}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#a62c5a] hover:underline"
+              >
+                <RotateCcw className="w-3 h-3" />
+                <span>Restaurar ({sentCount})</span>
+              </button>
+            )}
           </div>
 
           {reminders.length === 0 ? (
@@ -98,13 +119,13 @@ export const AvisosScreen: React.FC<AvisosScreenProps> = ({
             </div>
           ) : (
             reminders.map((reminder) => {
-              const isSent = !!sentIds[reminder.id];
+              const isSent = !!sentReminderKeys[reminder.id];
 
               return (
                 <div
                   key={reminder.id}
                   className={`bg-white/95 rounded-3xl p-4 shadow-[0_4px_18px_rgba(224,90,135,0.06)] border transition-all space-y-3 ${
-                    isSent ? 'border-emerald-200 opacity-85' : 'border-pink-100 hover:border-pink-300'
+                    isSent ? 'border-emerald-200 opacity-75' : 'border-pink-100 hover:border-pink-300'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
@@ -125,12 +146,14 @@ export const AvisosScreen: React.FC<AvisosScreenProps> = ({
 
                     <span
                       className={`px-2.5 py-1 rounded-full text-[10px] font-bold shrink-0 ${
-                        reminder.is_urgent
+                        isSent
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          : reminder.is_urgent
                           ? 'bg-rose-50 text-rose-600 border border-rose-200'
                           : 'bg-amber-50 text-amber-700 border border-amber-200'
                       }`}
                     >
-                      Hace {reminder.days_elapsed} días
+                      {isSent ? 'Enviado' : `Hace ${reminder.days_elapsed} días`}
                     </span>
                   </div>
 
@@ -172,7 +195,6 @@ export const AvisosScreen: React.FC<AvisosScreenProps> = ({
         </div>
       )}
 
-      {/* Pestaña 2: Lista Completa de Fechas Especiales Colombia */}
       {activeTab === 'especiales' && (
         <div className="space-y-4">
           <div className="flex items-center justify-between px-1">
