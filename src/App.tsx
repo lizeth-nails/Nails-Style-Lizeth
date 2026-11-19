@@ -19,7 +19,8 @@ import {
   seedAllDataToSupabase
 } from './lib/supabase';
 
-// Convierte cualquier formato de fecha (YYYY-MM-DD o DD-MM-YYYY) a Date local al mediodía
+const SENT_REMINDERS_STORAGE_KEY = 'nails_style_sent_reminders_v1';
+
 function parseLocalDate(dateStr?: string): Date | null {
   if (!dateStr) return null;
   const clean = dateStr.trim().substring(0, 10);
@@ -41,7 +42,6 @@ function formatIsoDate(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-// Encuentra los días de recordatorio según el nombre del servicio
 function getCycleDaysForService(serviceName: string): number {
   const normalized = serviceName.toLowerCase().trim();
   const exactMatch = SERVICES.find(
@@ -58,14 +58,13 @@ function getCycleDaysForService(serviceName: string): number {
 
   if (normalized.includes('semipermanente pies')) return 30;
   if (normalized.includes('semipermanente') || normalized.includes('press on')) return 25;
-  return 15; // Por defecto para Manicure / Pedicura tradicional
+  return 15;
 }
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
   const [activeTab, setActiveTab] = useState<ActiveTab>('agenda');
 
-  // Salon Data States (Direct from Supabase)
   const [clients, setClients] = useState<Client[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -73,7 +72,15 @@ export default function App() {
   const [isAutoSeeding, setIsAutoSeeding] = useState<boolean>(false);
   const [selectedDateForNewAppt, setSelectedDateForNewAppt] = useState<string>('');
 
-  // Modals
+  const [sentReminderKeys, setSentReminderKeys] = useState<Record<string, boolean>>(() => {
+    try {
+      const saved = localStorage.getItem(SENT_REMINDERS_STORAGE_KEY);
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
   const [isSupabaseModalOpen, setIsSupabaseModalOpen] = useState<boolean>(false);
   const [whatsAppModal, setWhatsAppModal] = useState<{
     isOpen: boolean;
@@ -89,7 +96,6 @@ export default function App() {
     serviceName: ''
   });
 
-  // Load Data on Startup directly from Supabase
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
@@ -118,21 +124,17 @@ export default function App() {
     loadData();
   }, [loadData]);
 
-  // Cálculo automático y efectivo de recordatorios a partir de las citas reales
   const reminders: SmartReminder[] = useMemo(() => {
     const today = new Date();
     today.setHours(12, 0, 0, 0);
     const msPerDay = 1000 * 60 * 60 * 24;
 
-    // Agrupar por clienta para quedarnos con su cita más reciente y no duplicar avisos
     const latestApptByClient = new Map<string, { appt: Appointment; dateObj: Date }>();
 
     appointments.forEach((appt) => {
       if (appt.status === 'cancelled') return;
       const apptDate = parseLocalDate(appt.date);
       if (!apptDate) return;
-
-      // Solo considerar citas que ya ocurrieron (hoy o en el pasado)
       if (apptDate.getTime() > today.getTime()) return;
 
       const clientKey = (appt.client_id || appt.client_name).toLowerCase().trim();
@@ -145,7 +147,6 @@ export default function App() {
     const generated: SmartReminder[] = [];
 
     latestApptByClient.forEach(({ appt, dateObj }) => {
-      // Buscar datos completos de la clienta (teléfono, género, avatar)
       const clientRecord = clients.find(
         (c) =>
           c.id === appt.client_id ||
@@ -156,14 +157,12 @@ export default function App() {
       const gender = appt.client_gender || clientRecord?.gender || 'female';
       const avatar = clientRecord?.avatar_url || '';
       const cycleDays = getCycleDaysForService(appt.service_name);
-
       const daysElapsed = Math.floor((today.getTime() - dateObj.getTime()) / msPerDay);
 
-      // Activar aviso cuando ya se cumplió el ciclo (o faltan máximo 2 días)
-      // y dentro de un rango razonable (hasta 90 días después)
       if (daysElapsed >= cycleDays - 1 && daysElapsed <= 90) {
         const targetDateObj = new Date(dateObj);
         targetDateObj.setDate(targetDateObj.getDate() + cycleDays);
+        const apptIsoDate = formatIsoDate(dateObj);
 
         const firstName = appt.client_name.split(' ')[0];
         const isOverdue = daysElapsed > cycleDays;
@@ -174,7 +173,7 @@ export default function App() {
             : `¡Hola ${firstName}! ✨ Te escribimos de Nails & Style Lizeth Jhoana para recordarte que ya pasaron ${daysElapsed} días desde tu ${appt.service_name}. ¡Agenda tu turno para mantener el cuidado de tus uñas! 🧴👌`;
 
         generated.push({
-          id: `rem-${appt.id}`,
+          id: `rem-${appt.id}-${apptIsoDate}`,
           client_id: appt.client_id || clientRecord?.id || appt.id,
           client_name: appt.client_name,
           client_gender: gender,
@@ -183,7 +182,7 @@ export default function App() {
           cycle_days: cycleDays,
           days_elapsed: daysElapsed,
           is_urgent: isOverdue,
-          appointment_date: formatIsoDate(dateObj),
+          appointment_date: apptIsoDate,
           target_date: formatIsoDate(targetDateObj),
           avatar_url: avatar,
           whatsapp_message: whatsappMessage
@@ -191,11 +190,34 @@ export default function App() {
       }
     });
 
-    // Ordenar: primero los más urgentes / con más días transcurridos
     return generated.sort((a, b) => b.days_elapsed - a.days_elapsed);
   }, [appointments, clients]);
 
-  // Quick Seed directly into Supabase
+  const pendingRemindersCount = useMemo(() => {
+    return reminders.filter((r) => !sentReminderKeys[r.id]).length;
+  }, [reminders, sentReminderKeys]);
+
+  const handleMarkReminderSent = useCallback((reminderId: string) => {
+    setSentReminderKeys((prev) => {
+      const updated = { ...prev, [reminderId]: true };
+      try {
+        localStorage.setItem(SENT_REMINDERS_STORAGE_KEY, JSON.stringify(updated));
+      } catch {
+        // Ignorar errores de almacenamiento en modo privado
+      }
+      return updated;
+    });
+  }, []);
+
+  const handleResetSentReminders = useCallback(() => {
+    setSentReminderKeys({});
+    try {
+      localStorage.removeItem(SENT_REMINDERS_STORAGE_KEY);
+    } catch {
+      // Ignorar errores de almacenamiento
+    }
+  }, []);
+
   const handleQuickSeed = async () => {
     setIsAutoSeeding(true);
     const res = await seedAllDataToSupabase();
@@ -208,7 +230,6 @@ export default function App() {
     }
   };
 
-  // Appointment saving to Supabase
   const handleSaveAppointment = async (
     apptData: Partial<Appointment>,
     newClientData?: Partial<Client>
@@ -225,7 +246,6 @@ export default function App() {
     return created;
   };
 
-  // Appointment deletion from Supabase
   const handleDeleteAppointment = async (id: string) => {
     const success = await deleteAppointment(id);
     if (success) {
@@ -233,7 +253,6 @@ export default function App() {
     }
   };
 
-  // Client saving to Supabase
   const handleSaveClient = async (clientData: Partial<Client>) => {
     const saved = await createOrUpdateClient(clientData);
     setClients((prev) => {
@@ -248,12 +267,10 @@ export default function App() {
     return saved;
   };
 
-  // Direct Schedule from Client Directory
   const handleScheduleAppointmentForClient = () => {
     setActiveTab('nueva-cita');
   };
 
-  // WhatsApp Trigger Helper
   const handleOpenWhatsAppModal = (
     clientName: string,
     phone: string,
@@ -269,29 +286,24 @@ export default function App() {
     });
   };
 
-  // If locked with PIN (SCR-00)
   if (!isAuthenticated) {
     return <PinScreen onUnlock={() => setIsAuthenticated(true)} />;
   }
 
   return (
     <div className="min-h-screen bg-[#fff8f8] text-[#23191d] flex flex-col font-sans selection:bg-[#ffd9e1] selection:text-[#a62c5a]">
-      {/* Background ambient decorative blurs */}
       <div className="fixed -top-24 -left-20 w-80 h-80 bg-[#ffd9e1]/50 rounded-full blur-3xl pointer-events-none z-0" />
       <div className="fixed top-1/2 -right-24 w-80 h-80 bg-[#fec97b]/30 rounded-full blur-3xl pointer-events-none z-0" />
       <div className="fixed -bottom-24 left-1/4 w-96 h-96 bg-[#f6e3e9]/60 rounded-full blur-3xl pointer-events-none z-0" />
 
-      {/* Fixed Sticky Header */}
       <Header
         onOpenSupabaseConfig={() => setIsSupabaseModalOpen(true)}
         onLockPin={() => setIsAuthenticated(false)}
-        pendingAlertsCount={reminders.length}
+        pendingAlertsCount={pendingRemindersCount}
         onNavigateToAlerts={() => setActiveTab('recordatorios')}
       />
 
-      {/* Main Content Area */}
       <main className="flex-1 w-full pt-20 relative z-10">
-        {/* Banner if tables need SQL execution in Supabase */}
         {needsSqlInit && (
           <div className="max-w-[430px] mx-auto px-4 pt-1 pb-2">
             <div className="bg-gradient-to-r from-[#fff0f3] to-[#fec97b]/40 border border-[#ffd9e1] rounded-3xl p-3.5 shadow-xs flex flex-col gap-2">
@@ -344,7 +356,7 @@ export default function App() {
             {activeTab === 'agenda' && (
               <AgendaScreen
                 appointments={appointments}
-                remindersCount={reminders.length}
+                remindersCount={pendingRemindersCount}
                 onOpenNewAppointment={(date?: string) => {
                   setSelectedDateForNewAppt(date || '');
                   setActiveTab('nueva-cita');
@@ -367,6 +379,9 @@ export default function App() {
             {activeTab === 'recordatorios' && (
               <AvisosScreen
                 reminders={reminders}
+                sentReminderKeys={sentReminderKeys}
+                onMarkReminderSent={handleMarkReminderSent}
+                onResetSentReminders={handleResetSentReminders}
                 onOpenWhatsAppModal={handleOpenWhatsAppModal}
               />
             )}
@@ -383,14 +398,12 @@ export default function App() {
         )}
       </main>
 
-      {/* Fixed Frosted Bottom Navigation */}
       <BottomNav
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab)}
-        pendingAlertsCount={reminders.length}
+        pendingAlertsCount={pendingRemindersCount}
       />
 
-      {/* WhatsApp Modal Sheet */}
       <WhatsAppPreviewModal
         isOpen={whatsAppModal.isOpen}
         onClose={() => setWhatsAppModal((prev) => ({ ...prev, isOpen: false }))}
@@ -400,7 +413,6 @@ export default function App() {
         serviceName={whatsAppModal.serviceName}
       />
 
-      {/* Supabase Connection & Schema Modal */}
       <SupabaseModal
         isOpen={isSupabaseModalOpen}
         onClose={() => setIsSupabaseModalOpen(false)}
