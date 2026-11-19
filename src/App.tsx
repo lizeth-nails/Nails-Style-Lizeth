@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ActiveTab, Client, Appointment, SmartReminder } from './types/salon';
 import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
@@ -9,15 +9,57 @@ import { AvisosScreen } from './components/AvisosScreen';
 import { ClientesScreen } from './components/ClientesScreen';
 import { WhatsAppPreviewModal } from './components/WhatsAppPreviewModal';
 import { SupabaseModal } from './components/SupabaseModal';
+import { SERVICES } from './lib/constants';
 import {
   getClients,
   getAppointments,
-  getReminders,
   createAppointment,
   deleteAppointment,
   createOrUpdateClient,
   seedAllDataToSupabase
 } from './lib/supabase';
+
+// Convierte cualquier formato de fecha (YYYY-MM-DD o DD-MM-YYYY) a Date local al mediodía
+function parseLocalDate(dateStr?: string): Date | null {
+  if (!dateStr) return null;
+  const clean = dateStr.trim().substring(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) {
+    const [y, m, d] = clean.split('-').map(Number);
+    return new Date(y, m - 1, d, 12, 0, 0);
+  }
+  if (/^\d{2}-\d{2}-\d{4}$/.test(clean)) {
+    const [d, m, y] = clean.split('-').map(Number);
+    return new Date(y, m - 1, d, 12, 0, 0);
+  }
+  return null;
+}
+
+function formatIsoDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+// Encuentra los días de recordatorio según el nombre del servicio
+function getCycleDaysForService(serviceName: string): number {
+  const normalized = serviceName.toLowerCase().trim();
+  const exactMatch = SERVICES.find(
+    (s) => s.name.toLowerCase().trim() === normalized
+  );
+  if (exactMatch) return exactMatch.reminderDays;
+
+  const partialMatch = SERVICES.find(
+    (s) =>
+      normalized.includes(s.name.toLowerCase().trim()) ||
+      s.name.toLowerCase().trim().includes(normalized)
+  );
+  if (partialMatch) return partialMatch.reminderDays;
+
+  if (normalized.includes('semipermanente pies')) return 30;
+  if (normalized.includes('semipermanente') || normalized.includes('press on')) return 25;
+  return 15; // Por defecto para Manicure / Pedicura tradicional
+}
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true);
@@ -26,7 +68,6 @@ export default function App() {
   // Salon Data States (Direct from Supabase)
   const [clients, setClients] = useState<Client[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [reminders, setReminders] = useState<SmartReminder[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [needsSqlInit, setNeedsSqlInit] = useState<boolean>(false);
   const [isAutoSeeding, setIsAutoSeeding] = useState<boolean>(false);
@@ -52,10 +93,9 @@ export default function App() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [clientRes, apptRes, remRes] = await Promise.all([
+      const [clientRes, apptRes] = await Promise.all([
         getClients(),
-        getAppointments(),
-        getReminders()
+        getAppointments()
       ]);
 
       if (clientRes.source === 'needs_sql' || apptRes.source === 'needs_sql') {
@@ -66,7 +106,6 @@ export default function App() {
 
       setClients(clientRes.data);
       setAppointments(apptRes.data);
-      setReminders(remRes.data);
     } catch (e) {
       console.warn('Error cargando datos desde Supabase:', e);
       setNeedsSqlInit(true);
@@ -79,6 +118,83 @@ export default function App() {
     loadData();
   }, [loadData]);
 
+  // Cálculo automático y efectivo de recordatorios a partir de las citas reales
+  const reminders: SmartReminder[] = useMemo(() => {
+    const today = new Date();
+    today.setHours(12, 0, 0, 0);
+    const msPerDay = 1000 * 60 * 60 * 24;
+
+    // Agrupar por clienta para quedarnos con su cita más reciente y no duplicar avisos
+    const latestApptByClient = new Map<string, { appt: Appointment; dateObj: Date }>();
+
+    appointments.forEach((appt) => {
+      if (appt.status === 'cancelled') return;
+      const apptDate = parseLocalDate(appt.date);
+      if (!apptDate) return;
+
+      // Solo considerar citas que ya ocurrieron (hoy o en el pasado)
+      if (apptDate.getTime() > today.getTime()) return;
+
+      const clientKey = (appt.client_id || appt.client_name).toLowerCase().trim();
+      const existing = latestApptByClient.get(clientKey);
+      if (!existing || apptDate.getTime() > existing.dateObj.getTime()) {
+        latestApptByClient.set(clientKey, { appt, dateObj: apptDate });
+      }
+    });
+
+    const generated: SmartReminder[] = [];
+
+    latestApptByClient.forEach(({ appt, dateObj }) => {
+      // Buscar datos completos de la clienta (teléfono, género, avatar)
+      const clientRecord = clients.find(
+        (c) =>
+          c.id === appt.client_id ||
+          c.name.toLowerCase().trim() === appt.client_name.toLowerCase().trim()
+      );
+
+      const phone = appt.client_phone || clientRecord?.phone || '';
+      const gender = appt.client_gender || clientRecord?.gender || 'female';
+      const avatar = clientRecord?.avatar_url || '';
+      const cycleDays = getCycleDaysForService(appt.service_name);
+
+      const daysElapsed = Math.floor((today.getTime() - dateObj.getTime()) / msPerDay);
+
+      // Activar aviso cuando ya se cumplió el ciclo (o faltan máximo 2 días)
+      // y dentro de un rango razonable (hasta 90 días después)
+      if (daysElapsed >= cycleDays - 2 && daysElapsed <= 90) {
+        const targetDateObj = new Date(dateObj);
+        targetDateObj.setDate(targetDateObj.getDate() + cycleDays);
+
+        const firstName = appt.client_name.split(' ')[0];
+        const isOverdue = daysElapsed > cycleDays;
+
+        const whatsappMessage =
+          gender === 'female'
+            ? `¡Hola ${firstName}! ✨ Te recordamos que han pasado ${daysElapsed} días desde tu servicio de ${appt.service_name}. ¡Es momento de consentir tus manos y pies en Nails & Style Lizeth Jhoana! 💅💖 ¿Te agendo tu cita?`
+            : `¡Hola ${firstName}! ✨ Te escribimos de Nails & Style Lizeth Jhoana para recordarte que ya pasaron ${daysElapsed} días desde tu ${appt.service_name}. ¡Agenda tu turno para mantener el cuidado de tus uñas! 🧴👌`;
+
+        generated.push({
+          id: `rem-${appt.id}`,
+          client_id: appt.client_id || clientRecord?.id || appt.id,
+          client_name: appt.client_name,
+          client_gender: gender,
+          client_phone: phone,
+          service_name: appt.service_name,
+          cycle_days: cycleDays,
+          days_elapsed: daysElapsed,
+          is_urgent: isOverdue,
+          appointment_date: formatIsoDate(dateObj),
+          target_date: formatIsoDate(targetDateObj),
+          avatar_url: avatar,
+          whatsapp_message: whatsappMessage
+        });
+      }
+    });
+
+    // Ordenar: primero los más urgentes / con más días transcurridos
+    return generated.sort((a, b) => b.days_elapsed - a.days_elapsed);
+  }, [appointments, clients]);
+
   // Quick Seed directly into Supabase
   const handleQuickSeed = async () => {
     setIsAutoSeeding(true);
@@ -88,7 +204,6 @@ export default function App() {
       setNeedsSqlInit(false);
       await loadData();
     } else {
-      // Open modal so user can copy SQL
       setIsSupabaseModalOpen(true);
     }
   };
