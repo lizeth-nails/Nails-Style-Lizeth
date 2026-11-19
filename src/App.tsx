@@ -161,7 +161,7 @@ export default function App() {
 
       // Activar aviso cuando ya se cumplió el ciclo (o faltan máximo 2 días)
       // y dentro de un rango razonable (hasta 90 días después)
-      if (daysElapsed >= cycleDays - 2 && daysElapsed <= 90) {
+      if (daysElapsed >= cycleDays - 1 && daysElapsed <= 90) {
         const targetDateObj = new Date(dateObj);
         targetDateObj.setDate(targetDateObj.getDate() + cycleDays);
 
